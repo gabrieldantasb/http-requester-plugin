@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_9ab64b07_b02c_4358_9324_c7d99106a282_Output_Variables_pluginNonRetryableError = Null
+

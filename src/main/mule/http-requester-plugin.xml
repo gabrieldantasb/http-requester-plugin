@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+  xmlns="http://www.mulesoft.org/schema/mule/core"
+  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+  <sub-flow name="http-request-plugin" doc:name="http-request-plugin">
+    <set-variable variableName="pluginConfig" value="#[(vars.httpRequestPluginConfig default {})]" doc:name="Set Plugin Config" />
+    <set-variable variableName="pluginNonRetryableError" value="#[(null)]" doc:name="Reset Non Retryable Error" />
+
+    <logger level="INFO"
+      doc:name="Logger Request"
+      category="com.company.integration.request"
+      message="#[output application/json indent=false --- dwl::httpRequester::logger::buildRequestLog(vars['pluginConfig'])]" />
+
+    <until-successful maxRetries="#[((vars['pluginConfig'] default {})['maxRetries'] default 0)]" millisBetweenRetries="#[((vars['pluginConfig'] default {})['msBetweenRetries'] default 0)]" doc:name="Until Successful">
+      <try doc:name="Try HTTP Request">
+        <http:request method="#[((vars['pluginConfig'] default {})['method'] default 'GET')]"
+          url="#[((vars['pluginConfig'] default {})['url'] default null)]"
+          sendCorrelationId="#[(if (((vars['pluginConfig'] default {})['sendCorrelationId'] default null) == true) 'ALWAYS' else if (((vars['pluginConfig'] default {})['sendCorrelationId'] default null) == false) 'NEVER' else 'AUTO')]"
+          correlationId="#[((vars['pluginConfig'] default {})['correlationId'] default null)]"
+          doc:name="HTTP Request">
+          <http:body><![CDATA[#[((vars['pluginConfig'] default {})['body'] default null)]]]></http:body>
+          <http:headers><![CDATA[#[((vars['pluginConfig'] default {})['headers'] default {})]]]></http:headers>
+          <http:query-params><![CDATA[#[((vars['pluginConfig'] default {})['queryParams'] default {})]]]></http:query-params>
+        </http:request>
+        <error-handler>
+          <on-error-propagate
+            when="#[(dwl::httpRequester::errorFilter::isRetryable(error, ((vars['pluginConfig'] default {})['retryableErrorTypes'] default []), ((vars['pluginConfig'] default {})['retryableErrorCodes'] default [])))]"
+            doc:name="On Retryable Error Propagate">
+            <logger level="ERROR"
+              doc:name="Logger Retryable Error"
+              category="com.company.integration.error"
+              message="#[output application/json indent=false --- {event: 'integration_error_retryable', correlationId: correlationId, errorType: ((error.errorType.namespace default 'UNKNOWN') as String) ++ ':' ++ ((error.errorType.identifier default 'UNKNOWN') as String), description: (error.description default 'Retryable HTTP request error') as String, payload: (write(error.errorMessage.payload) default &quot;&quot;)}]" />
+          </on-error-propagate>
+          <on-error-continue doc:name="On Non Retryable Error Continue">
+            <logger level="ERROR"
+              doc:name="Logger Non Retryable Error"
+              category="com.company.integration.error"
+              message="#[output application/json indent=false --- {event: 'integration_error_non_retryable', correlationId: correlationId, errorType: ((error.errorType.namespace default 'UNKNOWN') as String) ++ ':' ++ ((error.errorType.identifier default 'UNKNOWN') as String), description: (error.description default 'Non retryable HTTP request error') as String, payload: (write(error.errorMessage.payload) default &quot;&quot;)}]" />
+            <set-variable
+              variableName="pluginNonRetryableError"
+              value="#[(error)]"
+              doc:name="Store Non Retryable Error" />
+          </on-error-continue>
+        </error-handler>
+      </try>
+    </until-successful>
+
+    <choice doc:name="Raise Non Retryable Error">
+      <when expression="#[(vars.pluginNonRetryableError != null)]">
+        <raise-error type="APP:HTTP_NON_RETRYABLE" description="#[(vars.pluginNonRetryableError.description ++ &quot;:&quot; ++ (write(vars.pluginNonRetryableError.errorMessage.payload default &quot;&quot;)) default 'Non retryable HTTP request error')]" doc:name="Raise Non Retryable Error" />
+      </when>
+    </choice>
+
+    <logger level="INFO"
+      doc:name="Logger Response"
+      category="com.company.integration.response"
+      message="#[output application/json indent = false&#10;---&#10;dwl::httpRequester::logger::buildResponseLog(attributes.statusCode, attributes.headers, payload, ((vars['pluginConfig'] default {&#10;})['maxLogSize'] default 10240))]" />
+		<flow-ref doc:name="clean-up-variables-http-request-plugin" doc:id="9a70f914-0f3f-4dbc-8d1e-f0d4ffd1429f" name="clean-up-variables-http-request-plugin"/>
+  
+</sub-flow>
+	<sub-flow name="clean-up-variables-http-request-plugin" doc:id="9ab64b07-b02c-4358-9324-c7d99106a282" >
+		<remove-variable doc:name="pluginConfig" doc:id="d32eaf48-3650-4254-ab5a-f7f0cbce2851" variableName="pluginConfig"/>
+		<remove-variable doc:name="pluginNonRetryableError" doc:id="7597314d-4681-4bdb-ba17-02374b09ed64" variableName="pluginNonRetryableError"/>
+	</sub-flow>
+
+
+</mule>
