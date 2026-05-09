@@ -13,6 +13,7 @@ A reusable MuleSoft **mule-plugin** that provides a single parametrized sub-flow
 - [Usage](#usage)
   - [Invoking the sub-flow](#invoking-the-sub-flow)
   - [Building the config object](#building-the-config-object)
+  - [Complete use sample XML](#complete-use-sample-xml)
   - [Config reference](#config-reference)
 - [Features](#features)
   - [Retry logic](#retry-logic)
@@ -43,7 +44,7 @@ All behaviour is controlled by a single variable (`vars.httpRequestPluginConfig`
 
 | Dependency | Version |
 |---|---|
-| Mule Runtime | 4.11.2 |
+| Mule Runtime | 4.9+ |
 | Java | 17 |
 | mule-http-connector | 1.10.3 |
 | MUnit (test) | 3.3.0 |
@@ -76,9 +77,17 @@ Use this format:
 
 The `<id>` value in `settings.xml` must match the repository id pattern used in `pom.xml`: `anypoint-exchange-${project.groupId}`.
 
+3. To publish this connector to your organization's Anypoint Exchange, run the following Maven command:
+
+```bash
+mvn deploy
+```
+
+This will upload the connector to Anypoint Exchange using the credentials and organization ID configured in your `settings.xml` and `pom.xml`.
+
 ---
 
-## Installation
+## Using this plugin
 
 Add the plugin as a Maven dependency in your application's `pom.xml`:
 
@@ -139,6 +148,37 @@ dwl::httpRequester::configBuilder::buildConfig(
 ++ dwl::httpRequester::configBuilder::withLogging(
     maxLogSize = 20480
 )
+```
+
+### Complete use sample XML
+
+The following full flow is the sample usage of this plugin and can be copied into a Mule app:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+
+  <flow name="get-ditto-sample-flow" doc:name="get-ditto-sample-flow">
+
+    <!-- [STUDIO:"Scheduler"]<scheduler doc:name="Scheduler">
+      <scheduling-strategy>
+        <fixed-frequency frequency="999" timeUnit="DAYS" startDelay="999" />
+      </scheduling-strategy>
+    </scheduler> [STUDIO] -->
+
+    <set-variable variableName="httpRequestPluginConfig"
+      doc:name="Set httpRequestPluginConfig"
+      value="#[%dw 2.0&#10;output application/java&#10;---&#10;dwl::httpRequester::configBuilder::buildConfig('https://pokeapi.co/api/v2/pokemon/ditzto', 'GET') ++ &#10;dwl::httpRequester::configBuilder::withRetry(3, 1000, ['HTTP:CONNECTIVITY'], ['404', '500', '502', '503', '504']) ++ &#10;dwl::httpRequester::configBuilder::withCorrelation(correlationId, true) ++ &#10;dwl::httpRequester::configBuilder::withLogging(10240)]" />
+
+    <flow-ref name="http-request-plugin" doc:name="Call http-request-plugin" />
+
+  </flow>
+
+</mule>
 ```
 
 ### Config reference
@@ -248,8 +288,8 @@ http-requester-plugin/
 
 ---
 
-## Contributing
+## Contact
 
-1. Update `groupId` in `pom.xml` from `com.mycompany` to your organisation's group ID before publishing to Anypoint Exchange.
-2. MUnit test suite location: `src/test/munit/http-requester-plugin-test.xml` (not yet created).
-3. Use the DataWeave `++` operator to add new config sections via `configBuilder` without breaking existing callers.
+If you have any questions, suggestions, or feedback about this plugin, feel free to reach out:
+
+**LinkedIn:** [Gabriel Dantas Borges](https://www.linkedin.com/in/gabriel-dantas-borges-6343ab1ba/)
