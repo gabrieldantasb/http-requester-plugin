@@ -170,11 +170,9 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
       </scheduling-strategy>
     </scheduler> [STUDIO] -->
 
-    <set-variable variableName="httpRequestPluginConfig"
-      doc:name="Set httpRequestPluginConfig"
-      value="#[%dw 2.0&#10;output application/java&#10;---&#10;dwl::httpRequester::configBuilder::buildConfig('https://pokeapi.co/api/v2/pokemon/ditzto', 'GET') ++ &#10;dwl::httpRequester::configBuilder::withRetry(3, 1000, ['HTTP:CONNECTIVITY'], ['404', '500', '502', '503', '504']) ++ &#10;dwl::httpRequester::configBuilder::withCorrelation(correlationId, true) ++ &#10;dwl::httpRequester::configBuilder::withLogging(10240)]" />
-
-    <flow-ref name="http-request-plugin" doc:name="Call http-request-plugin" />
+		<set-variable value="#[%dw 2.0&#10;output application/java&#10;&#10;var body = '{&#10;    &quot;title&quot;: &quot;My First Post&quot;,&#10;    &quot;body&quot;: &quot;This is the body of my post&quot;,&#10;    &quot;userId&quot;: 1&#10;}'&#10;&#10;var headers = {&#10;	'Content-Type': 'application/json'&#10;}&#10;&#10;---&#10;dwl::httpRequester::configBuilder::buildConfig(&quot;https://jsonplaceholder.typicode.com/posts&quot;, 'POST', body) ++ &#10;dwl::httpRequester::configBuilder::withRetry(3, 1000, ['HTTP:CONNECTIVITY'], ['404', '500', '502', '503', '504']) ++ &#10;dwl::httpRequester::configBuilder::withCorrelation(correlationId, true) ++ &#10;dwl::httpRequester::configBuilder::withLogging(10240) ++&#10;dwl::httpRequester::configBuilder::withHeaders(headers)]" doc:name="Set httpRequestPluginConfig" doc:id="cbc6375e-8946-4cba-af89-c9a562f7202d" variableName="httpRequestPluginConfig" />
+    
+		<flow-ref doc:name="Call http-request-plugin" doc:id="5a2b1518-6689-4236-8058-8820efea7a8e" name="http-request-plugin" />
 
   </flow>
 
