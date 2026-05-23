@@ -162,13 +162,7 @@ The following full flow is the sample usage of this plugin and can be copied int
   xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
 
-  <flow name="get-ditto-sample-flow" doc:name="get-ditto-sample-flow">
-
-    <!-- [STUDIO:"Scheduler"]<scheduler doc:name="Scheduler">
-      <scheduling-strategy>
-        <fixed-frequency frequency="999" timeUnit="DAYS" startDelay="999" />
-      </scheduling-strategy>
-    </scheduler> [STUDIO] -->
+  <flow name="post-request-sample-flow" doc:name="get-ditto-sample-flow">
 
 		<set-variable value="#[%dw 2.0&#10;output application/java&#10;&#10;var body = '{&#10;    &quot;title&quot;: &quot;My First Post&quot;,&#10;    &quot;body&quot;: &quot;This is the body of my post&quot;,&#10;    &quot;userId&quot;: 1&#10;}'&#10;&#10;var headers = {&#10;	'Content-Type': 'application/json'&#10;}&#10;&#10;---&#10;dwl::httpRequester::configBuilder::buildConfig(&quot;https://jsonplaceholder.typicode.com/posts&quot;, 'POST', body) ++ &#10;dwl::httpRequester::configBuilder::withRetry(3, 1000, ['HTTP:CONNECTIVITY'], ['404', '500', '502', '503', '504']) ++ &#10;dwl::httpRequester::configBuilder::withCorrelation(correlationId, true) ++ &#10;dwl::httpRequester::configBuilder::withLogging(10240) ++&#10;dwl::httpRequester::configBuilder::withHeaders(headers)]" doc:name="Set httpRequestPluginConfig" doc:id="cbc6375e-8946-4cba-af89-c9a562f7202d" variableName="httpRequestPluginConfig" />
     
